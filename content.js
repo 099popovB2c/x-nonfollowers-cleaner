@@ -54,7 +54,7 @@
 
   function findNativeFollowingButton(cell) {
     const explicit = cell.querySelector(
-      '[data-testid$="-unfollow"], [data-testid="unfollow"], [data-testid$="-follow"]'
+      '[data-testid$="-unfollow"], [data-testid="unfollow"]'
     );
     if (explicit) return explicit;
 
@@ -103,7 +103,11 @@
   }
 
   function todayKey() {
-    return new Date().toISOString().slice(0, 10);
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
   }
 
   async function recordSuccessfulUnfollow() {
@@ -117,6 +121,19 @@
       dailyUnfollowDate: key,
       dailyUnfollowCount: current + 1
     });
+  }
+
+  async function getDailyUnfollowCount() {
+    const key = todayKey();
+    const stored = await chrome.storage.local.get(["dailyUnfollowDate", "dailyUnfollowCount"]);
+    if (stored.dailyUnfollowDate !== key) {
+      await chrome.storage.local.set({
+        dailyUnfollowDate: key,
+        dailyUnfollowCount: 0
+      });
+      return 0;
+    }
+    return Number(stored.dailyUnfollowCount || 0);
   }
 
   function findConfirmUnfollowButton() {
@@ -312,6 +329,47 @@
     }
   }
 
+  async function timedSingleUnfollow() {
+    if (state.batchRunning) {
+      return { ok: false, reason: "another-operation-running" };
+    }
+
+    const dailyCount = await getDailyUnfollowCount();
+    if (dailyCount >= 200) {
+      return { ok: false, reason: "daily-ceiling-reached" };
+    }
+
+    state.batchRunning = true;
+
+    try {
+      const phrases = await getPhrases();
+      const cells = getUserCells();
+
+      for (const cell of cells) {
+        const item = await classifyCell(cell, phrases);
+        if (!item || item.followsBack) continue;
+
+        if (!findNativeFollowingButton(cell)) continue;
+
+        const result = await unfollowItem(item);
+        if (result.ok) {
+          await scan();
+          return {
+            ok: true,
+            username: result.username,
+            dailyCount: await getDailyUnfollowCount()
+          };
+        }
+
+        return result;
+      }
+
+      return { ok: false, reason: "no-loaded-nonfollower" };
+    } finally {
+      state.batchRunning = false;
+    }
+  }
+
   async function scan() {
     const phrases = await getPhrases();
     const cells = getUserCells();
@@ -357,6 +415,10 @@
     }
     if (msg.type === "XNFC_BATCH_UNFOLLOW") {
       limitedBatchUnfollow(msg.limit).then(sendResponse);
+      return true;
+    }
+    if (msg.type === "XNFC_TIMED_TICK") {
+      timedSingleUnfollow().then(sendResponse);
       return true;
     }
     if (msg.type === "XNFC_STATUS") {
