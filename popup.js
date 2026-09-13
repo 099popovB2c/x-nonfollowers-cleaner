@@ -7,7 +7,11 @@ function render(data) {
 }
 
 function todayKey() {
-  return new Date().toISOString().slice(0, 10);
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
 
 async function renderDailyCounter() {
@@ -45,6 +49,63 @@ async function renderDailyCounter() {
   }
 
   return shown;
+}
+
+const TIMED_ALARM = "XNFC_TIMED_UNFOLLOW";
+
+function formatRemainingTime(ms) {
+  if (ms <= 0) return "due now";
+  const totalSeconds = Math.ceil(ms / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  if (minutes <= 0) return `${seconds}s`;
+  return `${minutes}m ${seconds}s`;
+}
+
+async function renderTimedStatus() {
+  const stored = await chrome.storage.local.get([
+    "timedUnfollowActive",
+    "timedUnfollowIntervalMinutes",
+    "timedUnfollowRemaining",
+    "timedUnfollowCompleted",
+    "timedUnfollowLastUsername",
+    "timedUnfollowLastError",
+    "timedUnfollowStopReason"
+  ]);
+
+  const active = Boolean(stored.timedUnfollowActive);
+  $("timedStart").disabled = active;
+  $("timedStop").disabled = !active;
+  $("timedMinutes").disabled = active;
+  $("timedTotal").disabled = active;
+
+  if (active) {
+    const alarm = await chrome.alarms.get(TIMED_ALARM);
+    const next = alarm?.scheduledTime
+      ? formatRemainingTime(alarm.scheduledTime - Date.now())
+      : "being restored";
+
+    $("timedStatus").textContent =
+      `Running: every ${stored.timedUnfollowIntervalMinutes} min • ` +
+      `${stored.timedUnfollowRemaining} remaining • next in ${next}` +
+      (stored.timedUnfollowLastUsername
+        ? ` • last: @${stored.timedUnfollowLastUsername}`
+        : "");
+    return;
+  }
+
+  if (stored.timedUnfollowLastError) {
+    $("timedStatus").textContent = `Stopped: ${stored.timedUnfollowLastError}`;
+    return;
+  }
+
+  if (stored.timedUnfollowStopReason === "completed") {
+    $("timedStatus").textContent =
+      `Completed. ${stored.timedUnfollowCompleted || 0} account(s) processed.`;
+    return;
+  }
+
+  $("timedStatus").textContent = "Stopped.";
 }
 
 async function activeTab() {
@@ -129,6 +190,77 @@ $("batch").addEventListener("click", async () => {
   }
 });
 
+$("timedStart").addEventListener("click", async () => {
+  const minutes = Math.max(
+    1,
+    Math.min(1440, Number($("timedMinutes").value) || 5)
+  );
+  const total = Math.max(
+    1,
+    Math.min(200, Number($("timedTotal").value) || 20)
+  );
+
+  $("timedMinutes").value = String(minutes);
+  $("timedTotal").value = String(total);
+
+  const tab = await activeTab();
+  if (!tab?.id || !/^https:\/\/(x|twitter)\.com\/.+\/following(?:\?|$)/.test(tab.url || "")) {
+    $("timedStatus").textContent =
+      "Open your X profile Following page in this tab before starting Timed Mode.";
+    return;
+  }
+
+  const today = await renderDailyCounter();
+  if (today >= 200) {
+    $("timedStatus").textContent =
+      "Daily 200 safety ceiling already reached. Timed Mode was not started.";
+    return;
+  }
+
+  const possibleToday = Math.min(total, 200 - today);
+  const ok = window.confirm(
+    `Start Timed Mode?\n\n` +
+    `1 unfollow every ${minutes} minute(s)\n` +
+    `Requested total: ${total}\n` +
+    `Maximum possible before today's 200 safety ceiling: ${possibleToday}\n\n` +
+    `First unfollow will run after ${minutes} minute(s). Keep this X Following tab open.\n\n` +
+    `The 200/day figure is a local precaution, not an official X safe limit.`
+  );
+  if (!ok) return;
+
+  await chrome.alarms.clear(TIMED_ALARM);
+  await chrome.storage.local.set({
+    timedUnfollowActive: true,
+    timedUnfollowTargetTabId: tab.id,
+    timedUnfollowIntervalMinutes: minutes,
+    timedUnfollowRemaining: total,
+    timedUnfollowCompleted: 0,
+    timedUnfollowStartedAt: Date.now(),
+    timedUnfollowStoppedAt: null,
+    timedUnfollowStopReason: null,
+    timedUnfollowLastRunAt: null,
+    timedUnfollowLastUsername: null,
+    timedUnfollowLastError: null
+  });
+
+  await chrome.alarms.create(TIMED_ALARM, {
+    delayInMinutes: minutes,
+    periodInMinutes: minutes
+  });
+
+  await renderTimedStatus();
+});
+
+$("timedStop").addEventListener("click", async () => {
+  await chrome.alarms.clear(TIMED_ALARM);
+  await chrome.storage.local.set({
+    timedUnfollowActive: false,
+    timedUnfollowStoppedAt: Date.now(),
+    timedUnfollowStopReason: "user-stopped"
+  });
+  await renderTimedStatus();
+});
+
 $("save").addEventListener("click", async () => {
   const values = $("phrases").value.split("\n").map(x => x.trim()).filter(Boolean);
   await chrome.storage.local.set({ customFollowPhrases: values });
@@ -137,6 +269,11 @@ $("save").addEventListener("click", async () => {
 
 (async () => {
   await renderDailyCounter();
+  await renderTimedStatus();
+  setInterval(() => {
+    renderTimedStatus().catch(() => {});
+    renderDailyCounter().catch(() => {});
+  }, 1000);
   const stored = await chrome.storage.local.get(["customFollowPhrases"]);
   $("phrases").value = (stored.customFollowPhrases || []).join("\n");
   try {
