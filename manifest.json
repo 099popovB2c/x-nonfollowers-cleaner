@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "X Non-Followers Cleaner",
-  "version": "1.5.0",
-  "description": "Open-source X Following cleaner with non-follower, timed, batch, and explicit unfollow-everyone modes plus local daily safety tracking.",
+  "version": "1.5.1",
+  "description": "Open-source X Following cleaner with non-follower, batch, timed, unfollow-everyone and timed-unfollow-everyone modes plus local daily safety tracking.",
   "permissions": [
     "storage",
     "activeTab",

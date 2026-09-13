@@ -85,7 +85,8 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
     "timedUnfollowTargetTabId",
     "timedUnfollowRemaining",
     "timedUnfollowCompleted",
-    "timedUnfollowIntervalMinutes"
+    "timedUnfollowIntervalMinutes",
+    "timedUnfollowMode"
   ]);
 
   if (!stored.timedUnfollowActive) {
@@ -115,9 +116,17 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
     return;
   }
 
+  const mode = stored.timedUnfollowMode === "everyone"
+    ? "everyone"
+    : "nonfollowers";
+
+  const messageType = mode === "everyone"
+    ? "XNFC_EVERYONE_TIMED_TICK"
+    : "XNFC_TIMED_TICK";
+
   let result;
   try {
-    result = await chrome.tabs.sendMessage(tabId, { type: "XNFC_TIMED_TICK" });
+    result = await chrome.tabs.sendMessage(tabId, { type: messageType });
   } catch (error) {
     await stopTimedMode("target-tab-unavailable", {
       timedUnfollowLastError:
@@ -131,6 +140,8 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
       timedUnfollowLastError:
         result?.reason === "no-loaded-nonfollower"
           ? "No loaded non-follower was available. Scroll the Following page to load more accounts, then start Timed Mode again."
+          : result?.reason === "no-loaded-following-account"
+          ? "No loaded Following account was available. Scroll the Following page to load more accounts, then start Timed Unfollow Everyone again."
           : `Timed unfollow stopped: ${result?.reason || "unknown error"}.`
     });
     return;
@@ -151,3 +162,4 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
     await stopTimedMode("completed");
   }
 });
+

@@ -42,26 +42,48 @@
       <p class="small">Choose any number from 1 to 100 currently loaded non-followers per run. After one confirmation, the extension clicks each unfollow and X confirmation automatically.</p>
     </section>
 
+
     <section class="everyone-box">
       <div class="section-title">Unfollow Everyone</div>
       <p class="small">
         Unfollow everyone currently loaded on your Following page, including accounts that follow you back.
       </p>
+
       <div class="everyone-row">
         <label>
           Max this run
           <input id="everyoneCount" type="number" min="1" max="200" value="50">
         </label>
-        <button id="everyoneStart" class="danger-solid">Unfollow Everyone</button>
+        <button id="everyoneStart" class="danger-solid">Unfollow Everyone Now</button>
       </div>
+
+      <div class="everyone-timed-grid">
+        <label>
+          Every (minutes)
+          <input id="everyoneTimedMinutes" type="number" min="1" max="1440" value="5">
+        </label>
+        <label>
+          Total accounts
+          <input id="everyoneTimedTotal" type="number" min="1" max="200" value="20">
+        </label>
+      </div>
+
+      <div class="everyone-timed-actions">
+        <button id="everyoneTimedStart" class="danger-solid">Start Timed Unfollow Everyone</button>
+        <button id="everyoneTimedStop">Stop</button>
+      </div>
+
+      <p id="everyoneTimedStatus" class="small timed-status">Stopped.</p>
+
       <p class="small warning">
-        This ignores the “Follows you” relationship. Daily safety ceiling: 200 total unfollows across all modes.
+        This ignores the “Follows you” relationship. Timed example: 5 minutes + 20 accounts = 1 unfollow every 5 minutes, including followers-back accounts. Daily safety ceiling: 200 total unfollows across all modes.
       </p>
     </section>
 
     <section class="timed-box">
       <div class="section-title">Timed Mode</div>
       <p class="small">Automatically unfollow 1 loaded non-follower at each interval.</p>
+
       <div class="timed-grid">
         <label>
           Every (minutes)
@@ -72,10 +94,12 @@
           <input id="timedTotal" type="number" min="1" max="200" value="20">
         </label>
       </div>
+
       <div class="timed-actions">
         <button id="timedStart" class="primary">Start Timed Mode</button>
         <button id="timedStop">Stop</button>
       </div>
+
       <p id="timedStatus" class="small timed-status">Stopped.</p>
       <p class="small">
         Example: 5 minutes + 20 accounts = 1 unfollow every 5 minutes, up to 20 accounts.
