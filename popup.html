@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>X Non-Followers Cleaner</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main>
+    <h1>X Non-Followers Cleaner</h1>
+    <p class="muted">
+      Open your X profile → Following, scroll to load accounts, then scan.
+    </p>
+
+    <div class="stats">
+      <div><strong id="scanned">0</strong><span>Scanned</span></div>
+      <div><strong id="followers">0</strong><span>Follow you</span></div>
+      <div><strong id="nonfollowers">0</strong><span>Don't follow</span></div>
+    </div>
+
+    <section id="dailySafety" class="safety-box">
+      <div class="safety-head">
+        <strong>Daily safety counter</strong>
+        <span id="dailyCount">0 / 200</span>
+      </div>
+      <div class="meter"><div id="dailyMeter" class="meter-fill"></div></div>
+      <p id="dailyWarning" class="small">
+        Suggested personal ceiling: 200 unfollows/day. This is not an official X safe limit.
+      </p>
+    </section>
+
+    <button id="scan" class="primary">Scan visible accounts</button>
+    <button id="next">Jump to next non-follower</button>
+
+    <section class="batch-box">
+      <label for="batchCount">Limited batch unfollow</label>
+      <div class="batch-row">
+        <input id="batchCount" type="number" min="1" max="100" value="10">
+        <button id="batch" class="danger">Unfollow batch</button>
+      </div>
+      <p class="small">Choose any number from 1 to 100 currently loaded non-followers per run. After one confirmation, the extension clicks each unfollow and X confirmation automatically.</p>
+    </section>
+
+    <details>
+      <summary>Language fallback</summary>
+      <p class="small">
+        If X uses a language not detected automatically, add the exact phrase X shows for “Follows you”, one per line.
+      </p>
+      <textarea id="phrases" rows="4" placeholder="Example: follows you"></textarea>
+      <button id="save">Save phrases</button>
+    </details>
+
+    <p id="status" class="status"></p>
+    <p class="warning">
+      X does not publish a guaranteed safe daily unfollow number. Bulk/aggressive automated unfollowing may trigger restrictions. The 200/day figure above is only a conservative user-set ceiling, not an official X limit.
+    </p>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>

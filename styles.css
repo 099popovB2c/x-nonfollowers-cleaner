@@ -1,0 +1,53 @@
+.xnfc-nonfollower {
+  position: relative !important;
+  outline: 2px solid rgba(244, 33, 46, 0.55) !important;
+  outline-offset: -2px !important;
+}
+
+.xnfc-followerback {
+  position: relative !important;
+}
+
+.xnfc-badge {
+  position: absolute !important;
+  top: 7px !important;
+  right: 112px !important;
+  z-index: 99999 !important;
+  padding: 3px 7px !important;
+  border-radius: 9999px !important;
+  font: 600 11px/1.2 Arial, sans-serif !important;
+  pointer-events: none !important;
+}
+
+.xnfc-badge-good {
+  background: rgba(0, 186, 124, 0.15) !important;
+  color: rgb(0, 150, 100) !important;
+}
+
+.xnfc-badge-warn {
+  background: rgba(244, 33, 46, 0.12) !important;
+  color: rgb(244, 33, 46) !important;
+}
+
+.xnfc-action {
+  position: absolute !important;
+  right: 12px !important;
+  bottom: 8px !important;
+  z-index: 99999 !important;
+  border: 1px solid rgb(244, 33, 46) !important;
+  border-radius: 9999px !important;
+  background: transparent !important;
+  color: rgb(244, 33, 46) !important;
+  padding: 5px 10px !important;
+  font: 700 12px/1.2 Arial, sans-serif !important;
+  cursor: pointer !important;
+}
+
+.xnfc-action:hover {
+  background: rgba(244, 33, 46, 0.1) !important;
+}
+
+.xnfc-action:disabled {
+  opacity: 0.55 !important;
+  cursor: default !important;
+}
