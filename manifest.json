@@ -1,11 +1,12 @@
 {
   "manifest_version": 3,
   "name": "X Non-Followers Cleaner",
-  "version": "1.3.1",
-  "description": "Find X accounts that do not appear to follow you back, process user-selected batches, and track a local daily unfollow safety counter.",
+  "version": "1.4.0",
+  "description": "Open-source X non-follower cleaner with manual, batch, timed unfollow modes and local daily safety tracking.",
   "permissions": [
     "storage",
-    "activeTab"
+    "activeTab",
+    "alarms"
   ],
   "host_permissions": [
     "https://x.com/*",
@@ -29,5 +30,9 @@
       ],
       "run_at": "document_idle"
     }
-  ]
+  ],
+  "background": {
+    "service_worker": "service-worker.js"
+  },
+  "minimum_chrome_version": "111"
 }
