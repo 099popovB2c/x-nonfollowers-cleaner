@@ -1,34 +1,19 @@
 {
   "manifest_version": 3,
   "name": "X Non-Followers Cleaner",
-  "version": "1.5.1",
-  "description": "Open-source X Following cleaner with non-follower, batch, timed, unfollow-everyone and timed-unfollow-everyone modes plus local daily safety tracking.",
-  "permissions": [
-    "storage",
-    "activeTab",
-    "alarms"
-  ],
-  "host_permissions": [
-    "https://x.com/*",
-    "https://twitter.com/*"
-  ],
+  "version": "1.5.2",
+  "description": "X Following cleaner with live DOM re-querying for more reliable review, batch and timed unfollow workflows.",
+  "permissions": ["storage", "activeTab", "alarms"],
+  "host_permissions": ["https://x.com/*", "https://twitter.com/*"],
   "action": {
     "default_popup": "popup.html",
     "default_title": "X Non-Followers Cleaner"
   },
   "content_scripts": [
     {
-      "matches": [
-        "https://x.com/*",
-        "https://twitter.com/*"
-      ],
-      "js": [
-        "content.js",
-        "everyone-content.js"
-      ],
-      "css": [
-        "styles.css"
-      ],
+      "matches": ["https://x.com/*", "https://twitter.com/*"],
+      "js": ["runtime-v152.js"],
+      "css": ["styles.css"],
       "run_at": "document_idle"
     }
   ],
